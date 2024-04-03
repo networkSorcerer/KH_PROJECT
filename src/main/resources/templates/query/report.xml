@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.report.dao.ReportDao">
+	<resultMap type="report" id="reportMap">
+		<id column="report_id" property="reportId"/>
+		<result column="report_sort" property="reportSort"/>
+		<result column="report_date" property="reportDate"/>
+		<result column="report_detail" property="reportDetail"/>
+		<result column="report_status" property="reportStatus"/>
+		
+		<result column="user_id" property="userId"/>
+		<result column="fboard_id" property="fboardId"/>
+		<result column="vfboard_id" property="vfboardId"/>
+		<result column="afboard_id" property="afboardId"/>
+		<result column="fcomment_id" property="fcommentId"/>
+		<result column="vfcomment_id" property="vfcommentId"/>
+		<result column="afcomment_id" property="afcommentId"/>
+		<result column="user_repcnt" property="repcnt"/>
+	</resultMap>
+
+	<!-- 	reportList.jsp 출력을 위한 select 문
+			case when 문을 통해 report table에 id를 가지고 있는 콘텐츠의 정보를 select 한다.
+			report table 뿐만 아니라 신고 기능이 있는 6가지 콘텐츠 테이블을 조인해 조회한다.
+			where 조건문에서도 or 연산자를 통해 각 콘텐츠 테이블의 아이디 유무를 확인한다.
+			또한 where절에서 report_id를 1로 규정해 이미 제재 처리된 신고 콘텐츠는 표시하지 않는다.	-->
+	<select id="reportList" parameterType="report" resultMap="reportMap">
+		SELECT
+		    r.report_id, 
+		    r.report_sort, 
+		    TO_CHAR(r.report_date, 'YYYY-MM-DD') AS report_date, 
+		    r.report_status,
+		    r.user_id, 
+		    r.fboard_id, 
+		    r.vfboard_id, 
+		    r.afboard_id, 
+		    r.fcomment_id, 
+		    r.vfcomment_id, 
+		    r.afcomment_id ,
+		    COALESCE(f.fboard_title, v.vfboard_title, a.afboard_title, fc.fcomment_content, vc.vfcomment_content, ac.afcomment_content) AS boardTitle,
+		    COALESCE(TO_CHAR(f.fboard_date, 'YYYY-MM-DD'), TO_CHAR(v.vfboard_date, 'YYYY-MM-DD'), TO_CHAR(a.afboard_date, 'YYYY-MM-DD'), TO_CHAR(fc.fcomment_date, 'YYYY-MM-DD'), TO_CHAR(vc.vfcomment_date, 'YYYY-MM-DD'), TO_CHAR(ac.afcomment_date, 'YYYY-MM-DD')) AS boardDate,
+		    COALESCE(f.user_id, v.user_id, a.user_id, fc.user_id, vc.user_id, ac.user_id) AS boardUser
+		FROM 
+		    report r
+		LEFT OUTER JOIN (
+		    SELECT fboard_id, fboard_title, fboard_date, user_id FROM freeBoard
+		) f ON r.fboard_id = f.fboard_id
+		LEFT OUTER JOIN (
+		    SELECT vfboard_id, vfboard_title, vfboard_date, user_id FROM volunteerFeedbackBoard
+		) v ON r.vfboard_id = v.vfboard_id
+		LEFT OUTER JOIN (
+		    SELECT afboard_id, afboard_title, afboard_date, user_id FROM adoptionFeedbackBoard
+		) a ON r.afboard_id = a.afboard_id
+		LEFT OUTER JOIN (
+		    SELECT fcomment_id, fcomment_content, fcomment_date, user_id FROM fcomment
+		) fc ON r.fcomment_id = fc.fcomment_id
+		LEFT OUTER JOIN (
+		    SELECT vfcomment_id, vfcomment_content, vfcomment_date, user_id FROM vfcomment
+		) vc ON r.vfcomment_id = vc.vfcomment_id
+		LEFT OUTER JOIN (
+		    SELECT afcomment_id, afcomment_content, afcomment_date, user_id FROM afcomment
+		) ac ON r.afcomment_id = ac.afcomment_id
+		WHERE 
+		    r.report_status = 1
+	</select>
+	
+	<!-- 	reportDetail.jsp 출력을 위한 select 문
+			case when 문을 통해 report table에 id를 가지고 있는 콘텐츠의 정보를 select 한다.
+			report table 뿐만 아니라 신고 기능이 있는 6가지 콘텐츠 테이블을 조인해 조회한다.
+			where 조건문에서도 or 연산자를 통해 각 콘텐츠 테이블의 아이디 유무를 확인한다.
+			또한 user_repcnt를 users 테이블에서 가져오기 위해 user_id를 users table과 report table에서 비교한다.	-->
+	<select id="reportDetail" parameterType="report" resultMap="reportMap">
+		SELECT DISTINCT
+		    r.report_id, 
+		    r.report_sort, 
+		    TO_CHAR(r.report_date, 'YYYY-MM-DD') AS report_date, 
+		    r.report_status,
+		    r.report_detail,
+		    r.user_id, 
+		    r.fboard_id, 
+		    r.vfboard_id, 
+		    r.afboard_id, 
+		    r.fcomment_id, 
+		    r.vfcomment_id, 
+		    r.afcomment_id, 
+		    u.user_repcnt,
+		    COALESCE(f.fboard_id, v.vfboard_id, a.afboard_id, fc.fcomment_id, vc.vfcomment_id, ac.afcomment_id) AS boardId,
+		    COALESCE(f.fboard_title, v.vfboard_title, a.afboard_title, fc.fcomment_content, vc.vfcomment_content, ac.afcomment_content) AS boardTitle,
+		    COALESCE(TO_CHAR(f.fboard_date, 'YYYY-MM-DD'), TO_CHAR(v.vfboard_date, 'YYYY-MM-DD'), TO_CHAR(a.afboard_date, 'YYYY-MM-DD'), TO_CHAR(fc.fcomment_date, 'YYYY-MM-DD'), TO_CHAR(vc.vfcomment_date, 'YYYY-MM-DD'), TO_CHAR(ac.afcomment_date, 'YYYY-MM-DD')) AS boardDate,
+		    COALESCE(f.user_id, v.user_id, a.user_id, fc.user_id, vc.user_id, ac.user_id) AS boardUser,
+		    COALESCE(f.fboard_content, v.vfboard_content, a.afboard_content, fc.fcomment_content, vc.vfcomment_content, ac.afcomment_content) AS boardContent
+		FROM 
+		    report r
+		LEFT OUTER JOIN 
+		    freeBoard f ON r.fboard_id = f.fboard_id
+		LEFT OUTER JOIN 
+		    volunteerFeedbackBoard v ON r.vfboard_id = v.vfboard_id
+		LEFT OUTER JOIN 
+		    adoptionFeedbackBoard a ON r.afboard_id = a.afboard_id
+		LEFT OUTER JOIN 
+		    fcomment fc ON r.fcomment_id = fc.fcomment_id
+		LEFT OUTER JOIN 
+		    vfcomment vc ON r.vfcomment_id = vc.vfcomment_id
+		LEFT OUTER JOIN 
+		    afcomment ac ON r.afcomment_id = ac.afcomment_id
+		LEFT OUTER JOIN 
+		    users u ON (u.user_id = COALESCE(f.user_id, v.user_id, a.user_id, fc.user_id, vc.user_id, ac.user_id))
+		WHERE 
+		    r.report_id = #{reportId}
+	</select>
+
+
+	<!-- 	신고기능 report table에 신고 정보를 기록하는 기능
+			report_id는 시퀀스를 통해 자동생성
+			report_sort, report_detail은 report.jsp에서 입력받아 사용
+			report_date는 sysdate를 사용
+			report status는 기본값 1 사용
+			boardId, user_id는 콘텐츠에서 가져오기
+			신고버튼을 누른 콘텐츠에 따라 각자 다른 insert 문 사용 				-->
+	<insert id="reportInsertFB" parameterType="report">
+		insert into report(report_id, report_sort, report_date, report_detail, report_status, fboard_id, user_id)
+		values(report_seq.nextval, #{reportSort}, sysdate, #{reportDetail}, 1, #{fboardId}, #{userId})
+	</insert>
+
+	<insert id="reportInsertVB" parameterType="report">
+		insert into report(report_id, report_sort, report_date, report_detail, report_status, vfboard_id, user_id)
+		values(report_seq.nextval, #{reportSort}, sysdate, #{reportDetail}, 1, #{vfboardId}, #{userId})
+	</insert>
+
+	<insert id="reportInsertAB" parameterType="report">
+		insert into report(report_id, report_sort, report_date, report_detail, report_status, afboard_id, user_id)
+		values(report_seq.nextval, #{reportSort}, sysdate, #{reportDetail}, 1, #{afboardId}, #{userId})
+	</insert>
+
+	<insert id="reportInsertFC" parameterType="report">
+		insert into report(report_id, report_sort, report_date, report_detail, report_status, fcomment_id, user_id)
+		values(report_seq.nextval, #{reportSort}, sysdate, #{reportDetail}, 1, #{fcommentId}, #{userId})
+	</insert>
+
+	<insert id="reportInsertVC" parameterType="report">
+		insert into report(report_id, report_sort, report_date, report_detail, report_status, vfcomment_id, user_id)
+		values(report_seq.nextval, #{reportSort}, sysdate, #{reportDetail}, 1, #{vfcommentId}, #{userId})
+	</insert>
+
+	<insert id="reportInsertAC" parameterType="report">
+		insert into report(report_id, report_sort, report_date, report_detail, report_status, afcomment_id, user_id)
+		values(report_seq.nextval, #{reportSort}, sysdate, #{reportDetail}, 1, #{afcommentId}, #{userId})
+	</insert>
+
+	<!-- 	신고제재 처리 기능
+			관리자가 신고 제재 혹은 무시 처리 할 시 
+			report table에 report_status를 2로 변경  -->
+	<update id="reportUpdateFB" parameterType="report">
+		update report
+		set report_status = 2
+		where fboard_id = #{boardId}
+	</update>
+	<update id="reportUpdateVB" parameterType="report">
+		update report
+		set report_status = 2
+		where vfboard_id = #{boardId}
+	</update>
+	<update id="reportUpdateAB" parameterType="report">
+		update report
+		set report_status = 2
+		where afboard_id = #{boardId}
+	</update>
+	<update id="reportUpdateFC" parameterType="report">
+		update report
+		set report_status = 2
+		where fcomment_id = #{boardId}
+	</update>
+	<update id="reportUpdateVC" parameterType="report">
+		update report
+		set report_status = 2
+		where vfcomment_id = #{boardId}
+	</update>
+	<update id="reportUpdateAC" parameterType="report">
+		update report
+		set report_status = 2
+		where afcomment_id = #{boardId}
+	</update>
+
+
+
+	<!-- 	신고 수정 기능
+			report table에서 report_sort, report_detail 수정 기능
+			report_date는 sysdate를 활용해 수정 -->
+	<update id="reportModify" parameterType="report">
+		update report
+		set 
+			report_sort = #{reportSort},
+			report_date = sysdate,
+			report_detail = #{reportDetail}
+		where report_id = #{reportId}
+	</update>
+
+	<!-- 	신고 취소 기능
+			report table에서 report_id를 기준으로 행 삭제	 -->
+	<delete id="reportDelete" parameterType="report">
+		delete from report
+		where report_id = #{reportId}
+	</delete>
+	
+	<!-- 	신고 제재시 회원의 제재 횟수 증가시키는 기능
+			users table의 user_repcnt를 1 증가시키기
+			reportDetail.jsp에서 sanctionBtn을 click하면 실행됨
+			user_id를 기준으로 처리됨							 -->
+	<update id="repcntUpdate" parameterType="report">
+		update users
+			set user_repcnt = user_repcnt + 1
+		where user_id = #{boardUser}
+	</update>
+	
+	
+	<!-- 신고 제재시 게시물 삭제 기능 -->
+	<delete id="contentDeleteFB" parameterType="report">
+		delete from freeboard
+		where fboard_id = #{boardId}
+	</delete>
+	<delete id="contentDeleteVB" parameterType="report">
+		delete from volunteerFeedbackBoard
+		where vfboard_id = #{boardId}
+	</delete>
+	<delete id="contentDeleteAB" parameterType="report">
+		delete from adoptionFeedbackBoard
+		where afboard_id = #{boardId}
+	</delete>
+	<delete id="contentDeleteFC" parameterType="report">
+		delete from fcomment
+		where fcomment_id = #{boardId}
+	</delete>
+	<delete id="contentDeleteVC" parameterType="report">
+		delete from vfcomment
+		where vfcomment_id = #{boardId}
+	</delete>
+	<delete id="contentDeleteAC" parameterType="report">
+		delete from afcomment
+		where afcomment_id = #{boardId}
+	</delete>
+	
+	<!-- 신고 제재 시 유저 계정 정지 -->
+	<update id="userStop" parameterType="report">
+		update users
+			set user_act = 2
+		where user_id = #{boardUser}
+	</update>
+	
+	<!-- 신고 제재로 정지된 계정 복구 -->
+	<update id="userGo" parameterType="report">
+		update users
+			set user_act = 1
+		where user_id = #{boardUser}
+	</update>
+	
+	<!-- 신고 제재 시 유저 계정 삭제 -->
+	<delete id="userDelete" parameterType="report">
+		delete from users
+		where user_id = #{boardUser}
+	</delete>
+	
+	
+	
+
+</mapper>

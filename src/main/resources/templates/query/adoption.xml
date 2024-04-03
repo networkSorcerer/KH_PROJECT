@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.adoption.dao.AdoptionDAO">
+	<resultMap type="adoption" id="adoptionMap">
+		<id column="adoption_id" property="adoptionId"/>
+		<result column="adoption_content" property="adoptionContent"/>
+		<result column="adoption_date" property="adoptionDate"/>
+		<result column="adoption_title" property="adoptionTitle"/>
+		<result column="adoption_cnt" property="adoptionCnt"/>
+		<result column="adoption_status" property="adoptionStatus"/>
+		<result column="adoption_level" property="adoptionLevel"/>
+		<result column="adoption_file" property="adoptionFile"/>
+		
+		<result column="admin_id" property="adminId"/>
+		
+		<result column="animal_id" property="animalId"/>
+		<result column="animal_species" property="animalSpecies"/>
+		<result column="animal_age" property="animalAge"/>
+		<result column="animal_gender" property="animalGender"/>
+		<result column="animal_status" property="animalStatus"/>
+		<result column="animal_kg" property="animalKg"/>
+		<result column="animal_color" property="animalColor"/>
+		<result column="animal_memo" property="animalMemo"/>
+		<result column="animal_temp" property="animalTemp"/>
+		<result column="animal_regist" property="animalRegist"/>
+		<result column="animal_name" property="animalName"/>
+		
+		<result column="readcnt" property="readcnt"/>
+		<result column="animal_file" property="animalFile"/>	
+	</resultMap>
+	
+	<select id="adoptionList" parameterType="adoption" resultMap="adoptionMap">
+	    <![CDATA[
+	    SELECT
+	      adoption_id, adoption_title, adoption_status, TO_CHAR(adoption_date, 'YYYY-MM-DD') AS adoption_date, adoption_cnt, adoption_level
+	
+	    FROM (
+	      		SELECT /*+INDEX_DESC(adoption pk_adoption)*/
+	        	ROWNUM AS rnum, adoption_id, adoption_title, adoption_status, adoption_date, adoption_cnt, adoption_level
+	      			FROM adoption
+	      		WHERE]]>
+	   			<trim prefix="(" suffix=") AND" prefixOverrides="AND">
+	    			<include refid="adoptionSearch"></include>
+	   			</trim>
+	   		<![CDATA[ rownum <= #{pageNum} * #{amount}
+	      	) adoptionList
+	    		WHERE rnum > (#{pageNum} - 1) * #{amount}
+	  		]]>
+	</select>
+
+
+	
+ 	<update id="readCntUpdate" parameterType="adoption">
+		UPDATE adoption
+		SET adoption_cnt = adoption_cnt + 1
+		WHERE adoption_id = #{adoptionId}
+	</update> 
+	
+	 <!-- 전체 레코드 수 조회 -->
+	<select id="adoptionListCnt" parameterType="adoption" resultType="int">
+    	SELECT count(*) FROM adoption
+    		<trim prefix=" where (" suffix=")" >
+        		<include refid="adoptionSearch"></include>
+   			</trim> 
+	</select>
+ 	
+ 	<sql id="adoptionSearch">
+		<if test="search=='adoption_id'">
+			<![CDATA[adoption_id LIKE '%'||#{keyword} || '%']]>
+		</if>
+		<if test="search=='adoption_title'">
+			<![CDATA[adoption_title LIKE '%' || #{keyword}||'%']]>
+		</if>
+		<if test="search=='adoption_level'">
+			<![CDATA[adoption_level LIKE '%' || #{keyword} || '%']]>
+		</if>
+		<if test="search=='adoption_status'">
+			<![CDATA[adoption_status LIKE '%' || #{keyword} || '%']]>
+		</if>
+	</sql>
+	
+	 
+	<insert id="adoptionInsert" parameterType="adoption">
+		<selectKey keyProperty="adoptionId" resultType="int" order="BEFORE">
+			select adoption_seq.nextval from dual
+		</selectKey>
+		INSERT INTO adoption (adoption_id, adoption_title, adoption_level,adoption_status,adoption_content, adoption_file,animal_id,admin_id)
+		VALUES( #{adoptionId}, #{adoptionTitle}, #{adoptionLevel},#{adoptionStatus},#{adoptionContent},#{adoptionFile},#{animalId},#{adminId})
+	</insert> 
+	
+	
+	
+	<select id="adoptionDetail" parameterType="adoption" resultMap="adoptionMap">
+		select an.animal_id, an.animal_name, an.animal_species, an.animal_gender, 
+		an.animal_kg, an.animal_age,an.animal_file,an.readcnt,
+		an.animal_age,an.animal_color,an.animal_status,an.animal_memo,an.animal_temp, 
+		ad.adoption_id, ad.adoption_title,ad.adoption_level,ad.adoption_status,ad.adoption_date,
+		ad.adoption_cnt,ad.adoption_file,ad.adoption_thumb,ad.adoption_content
+		from animal an  join adoption ad  on an.animal_id = ad.animal_id
+		where ad.adoption_id = #{adoptionId}
+	</select> 
+	
+	<select id="pwdConfirm" parameterType="adoption" resultType="int">
+		SELECT NVL((
+					SELECT 1 FROM adoption
+					WHERE adoption_id = #{adoptionId}
+					), 0) as state
+		FROM dual
+	</select>
+	
+	<update id="adoptionUpdate" parameterType="adoption">
+	    UPDATE adoption
+	    SET adoption_title = #{adoptionTitle},
+	        adoption_content = #{adoptionContent},
+	        adoption_level = #{adoptionLevel},
+	        adoption_status = #{adoptionStatus},
+	        adoption_date = sysdate
+	      
+	        <if test="adoptionFile != ''">
+	        	, adoption_file = #{adoptionFile}
+	        </if>
+	    WHERE adoption_id =#{adoptionId}
+	</update>
+
+
+	
+	<delete id ="adoptionDelete" parameterType="adoption">
+		DELETE FROM adoption WHERE adoption_id = #{adoptionId}
+	</delete>
+		
+	
+		
+		
+		
+	<!-- 게시판 리스트 기본 조회 -->
+	<!-- <select id="boardList" parameterType="board" resultMap="boardMap">
+		SELECT b_num, b_name, b_title, to_char(b_date, 'YYYY-MM-DD')as b_date, readcnt
+		FROM spring_board
+		<where>
+			<if test="search=='b_title'">
+				<![CDATA[b_title LIKE '%'||#{keyword} || '%']]>
+			</if>
+			<if test="search=='b_content'">
+				<![CDATA[b_content LIKE '%' || #{keyword}||'%']]>
+			</if>
+			<if test="search=='b_name'">
+				<![CDATA[b_name LIKE '%' || #{keyword} || '%']]>
+			</if>
+		</where>
+		ORDER BY b_num desc
+	</select> -->
+	
+	<!-- 전체 레코드 수 조회 -->
+	<!-- <select id="boardListCnt" parameterType="board" resultType="int">
+		SELECT count(*) FROM spring_board
+		<where>
+			<if test="search=='b_title'">
+				<![CDATA[b_title LIKE '%'||#{keyword} || '%']]>
+			</if>
+			<if test="search=='b_content'">
+				<![CDATA[b_content LIKE '%' || #{keyword}||'%']]>
+			</if>
+			<if test="search=='b_name'">
+				<![CDATA[b_name LIKE '%' || #{keyword} || '%']]>
+			</if>
+		</where>
+	</select> -->
+</mapper>

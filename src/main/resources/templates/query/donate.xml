@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.donate.dao.DonateDAO">
+	<resultMap type="donate" id="donateMap">
+		<id column="donate_id" property="do_id"/>
+		<result column="donate_price" property="do_pirce"/>
+		<result column="donate_day" property="do_day"/>
+		<result column="donate_pm" property="do_PM"/>
+		<result column="donate_fday" property="do_FDay"/>
+		<result column="donate_sprice" property="do_SPrice"/>
+		<result column="donate_ahname" property="do_AHName"/>
+		<result column="donate_ahphone" property="do_AHPhone"/>
+		
+	</resultMap>
+	
+	<select id="donateInsert" parameterType="donate">
+		INSERT INTO donate (donate_id, donate_price, donate_pm, donate_sprice, donate_ahname, donate_ahphone)
+		VALUE(donate_seq.NEXTVAL), #{do_price}, #{do_PM}, #{do_Sprice}, {do_AHName}, {do_AHPhone};
+	</select>
+	
+	<select id="donateList" parameterType="donate" resultMap="donateMap">
+		SELECT donate_pm, donate_price, donate_sprice, donate_day, donate_fday, doate_id
+		FROM donate
+		WHERE
+	</select>
+</mapper>

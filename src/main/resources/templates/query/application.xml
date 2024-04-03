@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.application.dao.ApplicationDAO">
+	
+	<resultMap type="application" id="applicationMap">
+		<id column="application_Id" property="applicationId" />
+		<result column="application_date" property="applicationDate" />
+		<result column="application_comment" property="applicationComment" />
+		<result column="application_result" property="applicationResult" />
+		<!-- <result column="user_id" property="userId" /> -->
+		<!-- <result column="volunteer_id" property="volunteerId" /> -->
+		<association property="user">
+			<result column="user_id" property="userId" /> 
+			<result column="user_name" property="userName" /> 
+			<result column="user_volcnt" property="userVolcnt" />
+		</association> 
+		<association property="volunteer">
+			<result column="volunteer_id" property="volunteerId" /> 
+			<result column="volunteer_title" property="volunteerTitle" />
+			<result column="volunteer_time" property="volunteerTime" />
+		</association>
+	</resultMap>
+	
+	<select id="applicationCount" resultType="int" parameterType="application">
+		SELECT count(*)
+		FROM application
+		WHERE volunteer_id = #{volunteer.volunteerId}
+	</select>
+	
+	<select id="applicationList" resultMap="applicationMap" resultType="application">
+		SELECT user_id, user_name, volunteer_id, application_id
+		FROM users inner join application
+		USING (user_id)
+		WHERE volunteer_id = #{volunteer.volunteerId}
+	</select>
+	
+	<insert id="applicationSubmit" parameterType="application">
+		INSERT INTO application
+		VALUES(application_seq.nextval, sysdate, #{applicationComment}, #{user.userId}, #{volunteer.volunteerId}, default)
+	</insert>
+	
+	<select id="applicationView" resultMap="applicationMap" parameterType="application">
+	<![CDATA[
+		SELECT application_id, volunteer_id, volunteer_title, application_comment, volunteer_time, application_result
+		FROM (
+				SELECT /*+ INDEX_DESC(application pk_application) */
+						rownum as rnum, application_id, volunteer_id, volunteer_title, application_comment, volunteer_time, application_result
+				FROM application inner join volunteer
+				USING (volunteer_id)
+				WHERE rownum <= #{pageNum} * #{amount} AND user_id = #{user.userId}
+				ORDER BY application_id DESC
+				) applicationView
+		WHERE rnum > (#{pageNum} - 1) * #{amount}
+	]]>
+	</select>
+	
+	<select id="applicationViewCnt" parameterType="application" resultType="int">
+		SELECT count(*)
+		FROM application
+		WHERE user_id = #{ user.userId }
+	</select>
+	
+	<delete id="applicationDelete" parameterType="application">
+		DELETE FROM application
+		WHERE application_id = #{applicationId}
+	</delete>
+	
+	<select id="applicationCheck" resultType="int" parameterType="application">
+		SELECT count(*)
+		FROM application INNER JOIN users
+		USING (user_id)
+		WHERE user_id = #{user.userId} AND volunteer_id = #{volunteer.volunteerId}
+	</select>
+	
+	<update id="increaseUserVolCnt" parameterType="java.lang.String" >
+	    UPDATE users
+	    SET user_volcnt = user_volcnt + 1
+	    WHERE user_id IN
+	    <foreach collection="array" item="userId" open="(" separator="," close=")">
+	        #{userId}
+	    </foreach>
+	</update>
+	
+	<update id="changeResult" parameterType="java.util.List">
+	    UPDATE application
+	    SET application_result = 1
+	    WHERE application_id IN
+	    <foreach collection="list" item="applicationId" separator="," open="(" close=")">
+	        #{applicationId}
+	    </foreach>
+	</update>
+	
+	<!-- <update id="changeResult" parameterType="java.util.List">
+	    UPDATE application
+	    SET application_result =
+	    <foreach collection="list" item="application" separator=" ">
+	        <choose>
+	            <when test="application.attendance == '참석'">1</when>
+	        </choose>
+	    </foreach>
+	    WHERE application_id IN (
+	    <foreach collection="list" item="application" open="" separator="," close="">
+	        #{application.applicationId}
+	    </foreach>
+	    )
+	</update> -->
+
+
+
+
+</mapper>

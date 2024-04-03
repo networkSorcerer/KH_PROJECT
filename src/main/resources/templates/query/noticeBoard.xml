@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.board.dao.NoticeBoardDAO">
+	<resultMap type="noticeBoard" id="noticeBoardMap">
+		<id column="nboard_id" property="nboardId"/>
+		<result column="nboard_title" property="nboardTitle"/>
+		<result column="nboard_content" property="nboardContent"/>
+		<result column="nboard_cnt" property="nboardCnt"/>
+		<result column="nboard_date" property="nboardDate"/>
+		<result column="admin_id" property="adminId"/>
+	</resultMap>
+	
+	
+	<!-- *********************유저페이지********************* -->
+	<!-- 공지게시판 목록 (유저페이지)-->
+	<select id="noticeBoardList" parameterType="noticeBoard" resultMap="noticeBoardMap">
+		<![CDATA[
+		SELECT 	nboard_id, nboard_title, admin_id, nboard_cnt, nboard_date
+		FROM 	(
+				SELECT /*+ INDEX_DESC(noticeBoard pk_noticeBoard)*/
+					rownum as rnum, nboard_id, nboard_title, admin_id, nboard_cnt, nboard_date
+				FROM noticeBoard
+				WHERE	rownum <= #{pageNum} * #{amount}
+				) noticeBoardList
+		WHERE	rnum > (#{pageNum} -1) * #{amount}	
+		ORDER BY nboard_id DESC
+		]]>
+	</select>
+	
+	<!-- 공지게시판 게시글 갯수 카운트(유저페이지) -->
+	<select id="noticeBoardListCnt" parameterType="noticeBoard" resultType="int">
+		select count(*) from noticeBoard
+	</select>
+	
+		<!--  공지게시판 글 상세조회(유저페이지) -->
+	<select id="noticeBoardDetail" parameterType="noticeBoard" resultMap="noticeBoardMap">
+		select 	n.nboard_id, n.nboard_title, n.nboard_content, n.nboard_cnt, n.nboard_date, n.admin_id
+		from 	noticeBoard n
+		where 	n.nboard_id = #{nboardId}
+	</select>
+	
+	<!-- *********************관리자페이지********************* -->
+	<!-- 공지게시판 목록 (관리자 페이지)-->
+	<select id="adminNoticeBoardList" parameterType="noticeBoard" resultMap="noticeBoardMap">
+		<![CDATA[
+		SELECT 	nboard_id, nboard_title, admin_id, nboard_cnt, nboard_date
+		FROM 	(
+				SELECT /*+ INDEX_DESC(noticeBoard pk_noticeBoard)*/
+					rownum as rnum, nboard_id, nboard_title, admin_id, nboard_cnt, nboard_date
+				FROM noticeBoard
+				WHERE	rownum <= #{pageNum} * #{amount}
+				) adminNoticeBoardList
+		WHERE	rnum > (#{pageNum} -1) * #{amount}	
+		ORDER BY nboard_id DESC
+		]]>
+	</select>
+	
+	<!-- <select id="adminNoticeBoardList" parameterType="noticeBoard" resultMap="noticeBoardMap">
+		SELECT 	nboard_id, nboard_title, nboard_cnt, nboard_date, admin_id
+		FROM 	noticeBoard
+		ORDER BY nboard_id DESC
+	</select> -->
+	
+	<!-- 공지게시판 게시글 갯수 카운트(관리자페이지) -->
+	<select id="adminNoticeBoardListCnt" parameterType="noticeBoard" resultType="int">
+		select count(*) from noticeBoard
+	</select>
+	
+	<!--  공지게시판 글 상세조회(관리자 페이지) -->
+	<select id="adminNoticeBoardDetail" parameterType="noticeBoard" resultMap="noticeBoardMap">
+		select 	nboard_id, nboard_title, nboard_content, nboard_cnt, nboard_date, admin_id
+		from 	noticeBoard 
+		where 	nboard_id = #{nboardId}
+	</select>
+	
+	<!-- 게시판 등록 (관리자 페이지) -->
+	<insert id="insertNoticeBoard" parameterType="noticeBoard">
+		<selectKey keyProperty="nboardId" order="BEFORE" resultType="int">
+			SELECT noticeBoard_seq.nextval from DUAL
+		</selectKey>
+		insert into noticeBoard (nboard_id, nboard_title, nboard_content, admin_id)
+		VALUES (#{nboardId}, #{nboardTitle}, #{nboardContent}, #{adminId})
+	</insert>
+		
+	<!-- 조회수 +1 -->
+	<update id="plusCnt" parameterType="noticeBoard">
+		UPDATE 	noticeBoard SET nboard_cnt = nboard_cnt +1 
+		WHERE 	nboard_id = #{nboardId}
+	</update>
+	
+	<!-- 게시글 수정 -->
+	<update id="updateNoticeBoard" parameterType="noticeBoard">
+		UPDATE noticeBoard
+		SET nboard_title = #{nboardTitle}, nboard_content = #{nboardContent}, admin_id=#{adminId}
+		WHERE	nboard_id = #{nboardId}
+	</update>
+	
+	<!-- 게시글 삭제 -->
+	<delete id="deleteNoticeBoard" parameterType="noticeBoard">
+		DELETE FROM noticeBoard 
+		WHERE	nboard_id = #{nboardId}
+	</delete>
+</mapper>

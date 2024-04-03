@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.user.dao.UserDao">
+	<resultMap type="user" id="userMap">
+		<id column="user_id" property="userId"/>
+		<result column="user_pwd" property="userPasswd"/>
+		<result column="user_name" property="userName"/>
+		<result column="user_phone" property="userPhone"/>
+		<result column="user_email" property="userEmail"/>
+		<result column="user_date" property="userDate"/>
+		<result column="user_act" property="userAct"/>
+		<result column="user_repcnt" property="userRepcnt"/>
+		<result column="user_volcnt" property="userVolcnt"/>
+		<result column="user_adoptChk" property="userAdoptChk"/>
+	</resultMap>
+	
+	<!-- 로그인 : 회원 상태 조건 추가 -->
+	<select id="userLoginProcess" parameterType="user" resultMap="userMap">
+		select user_id, user_name, user_act, user_volcnt, user_adoptChk
+		from users
+		where user_id = #{userId} and user_pwd = #{userPasswd}
+	</select>
+	
+	<!-- 아이디 찾기 -->
+	<select id="findId" parameterType="user" resultMap="userMap">
+		select user_id
+		from users
+		where user_email = #{userEmail}
+	</select>
+	
+	<!-- 아이디, 이메일로 유저 확인 -->
+	<select id="findUserByIdAndEmail" parameterType="user" resultType="int">
+		select count(*)
+		from users
+		where user_id = #{userId} and user_email = #{userEmail}
+	</select>
+	
+	<!-- 비밀번호 재설정 -->
+	<update id="resetPasswd" parameterType="user">
+		update users
+		set user_pwd = #{userPasswd} 
+		where user_id = #{userId} and user_email = #{userEmail}
+	</update>
+	
+	<!-- 회원 가입 -->
+	<insert id="userJoin" parameterType="user">
+		insert into users(user_id, user_pwd, user_name, user_phone, user_email)
+		values(#{userId}, #{userPasswd}, #{userName}, #{userPhone}, #{userEmail})
+	</insert>
+	
+	<!-- 아이디 중복 체크 -->
+	<select id="idCheck" parameterType="user" resultType="int">
+		select count(*) 
+		from users
+		where user_id = #{userId}
+	</select>
+	<!-- 핸드폰번호 중복 체크 -->
+	<select id="phoneCheck" parameterType="user" resultType="int">
+		select count(*) 
+		from users
+		where user_phone = #{userPhone}
+	</select>
+	<!-- 이메일 중복 체크 -->
+	<select id="emailCheck" parameterType="user" resultType="int">
+		select count(*) 
+		from users
+		where user_email = #{userEmail}
+	</select>
+	
+	<!-- 중복 체크 : 아이디, 핸드폰번호, 이메일 한꺼번에 선택해서 처리하려면 checkType 필드가 필요..
+	<select id="checkDuplicate" parameterType="user" resultType="int">
+	    select count(*) 
+		from users
+	    where
+	    <choose>
+	        <when test="checkType == 'id'">
+	            user_id = #{userId}
+	        </when>
+	        <when test="checkType == 'phone'">
+	            user_phone = #{userPhone}
+	        </when>
+	        <when test="checkType == 'email'">
+	            user_email = #{userEmail}
+	        </when>
+	    </choose>
+	</select>-->
+	
+	<!-- 회원 정보 조회 : 3/21 user_level 컬럼 삭제 -->
+	<select id="userInfo" parameterType="user" resultMap="userMap">
+		select 
+		    user_id, user_name, user_phone, user_email, user_volcnt,
+		    to_char(user_date, 'YYYY-MM-DD') as user_date, user_act, user_repcnt, user_adoptChk
+		from users
+		where user_id = #{userId} 
+	</select>
+	
+	<!-- 회원 정보 수정 -->
+	<update id="updateProfile" parameterType="user">
+		update users
+		set user_name = #{userName}, user_phone = #{userPhone}, user_email = #{userEmail}
+		<if test="userPasswd != ''">	
+			, user_pwd = #{userPasswd}
+		</if>	
+		where user_id = #{userId}
+	</update>
+	
+	<!-- 비밀번호 일치 확인 -->
+	<select id="pwdConfirm" parameterType="user" resultType="int">
+		select nvl((
+		            select 1 from users
+		            where user_id = #{userId} and user_pwd = #{userPasswd}
+		          ), 0) as state
+		from dual
+	</select>
+	
+	<!-- 회원 탈퇴 : 회원상태 변경 -->
+	<delete id="userWithdrawal" parameterType="user">       
+        update users
+		set user_act = 0 
+		where user_id = #{userId}
+    </delete>
+    <!-- 회원 탈퇴 : 회원 레코드 삭제 -->
+    <delete id="userDelete" parameterType="user">
+    	DELETE FROM users WHERE user_id = #{userId}
+    </delete>
+    
+    
+	
+	<!-- 회원 목록 기본 조회 
+	<select id="userList" parameterType="user" resultMap="userMap">
+		select user_id, user_name, user_phone, user_email, to_char(user_date, 'YYYY-MM-DD') as user_date, 
+			   user_act, user_repcnt, user_volcnt, user_level, user_adoptChk
+		from users
+		order by user_date
+	</select>-->
+	
+	<!-- 아래 두개 sql 중복코드 따로 떼어서 정의함!! where과 trim 명시 확인 -->
+	<sql id="userSearch">
+		<if test="search=='userAct'">
+			<![CDATA[ user_act = #{keyword} ]]>
+		</if>
+
+		<if test="search=='userDate'">
+			<![CDATA[ to_char(user_date, 'YYYY-MM-DD') between #{startDate} and #{endDate} ]]>
+		</if>
+	</sql>
+	
+	<!-- 전체 레코드 수 조회 -->
+	<select id="userListCnt" parameterType="user" resultType="int">
+		select count(*) from users
+		<!-- where와 같은 표현 -->
+		<trim prefix=" where (" suffix=")">		
+			<include refid="userSearch"></include>
+		</trim>
+	</select>
+	
+	<!-- 게시판 리스트 조회(페이징 처리와 검색 처리) : 3/21 user_level 컬럼 삭제 -->
+    <select id="userList" parameterType="user" resultMap="userMap">
+       <![CDATA[ 
+         SELECT 
+               user_id, user_name, user_phone, user_email, to_char(user_date, 'YYYY-MM-DD') as user_date, 
+			   user_act, user_repcnt, user_volcnt, user_adoptChk   
+         FROM (
+                 SELECT /*+ INDEX_DESC(users pk_users) */ 
+                      rownum as rnum, user_id, user_name, user_phone, user_email, user_date, user_act, user_repcnt, user_volcnt, user_adoptChk
+                 FROM users
+                 WHERE ]]>
+                 <trim prefix="(" suffix=") AND " prefixOverrides="AND">
+                      <include refid="userSearch"></include>
+                 </trim>
+                <![CDATA[ rownum <= #{pageNum} * #{amount} 
+        		) userList
+         WHERE rnum > (#{pageNum} - 1) * #{amount} 
+      ]]>
+     </select> 
+
+		
+
+</mapper>

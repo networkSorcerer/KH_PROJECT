@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.map.dao.MapDAO">
+	<resultMap type="center" id="mapMap">
+		<id column="center_id" property="centerId"/>
+		<result column="center_name" property="centerName"/>
+		<result column="center_address" property="centerAddress"/>
+		<result column="center_operating" property="centerOperating"/>
+		<result column="center_tell" property="centerTell"/>
+		<result column="center_lat" property="centerLat"/>
+		<result column="center_lot" property="centerLot"/>
+	</resultMap>
+	
+	<select id="mapList" parameterType="center" resultMap="mapMap">
+		select center_id, center_name, center_address,center_operating,center_tell,center_lat,center_lot
+		from center
+		order by center_id desc
+	</select>
+</mapper>

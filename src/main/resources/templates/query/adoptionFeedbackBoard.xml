@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.board.dao.AdoptionFeedbackBoardDAO">
+	<resultMap type="adoptionFeedbackBoard" id="adoptionFeedbackBoardMap">
+		<id column="afboard_id" property="afboardId"/>
+		<result column="afboard_title" property="afboardTitle"/>
+		<result column="afboard_content" property="afboardContent"/>
+		<result column="afboard_cnt" property="afboardCnt"/>
+		<result column="afboard_date" property="afboardDate"/>
+		<result column="user_id" property="userId"/>
+		
+		<result column="user_adoptChk" property="userAdoptChk"/>
+		
+		<result column="report_detail" property="reportDetail"/>
+		<result column="report_id" property="reportId"/>
+		<result column="report_sort" property="reportSort"/>
+		<result column="report_status" property="reportStatus"/>
+		
+	</resultMap>
+	
+	<!-- 입양후기게시판 목록 -->
+	<select id="adoptionFeedbackBoardList" parameterType="adoptionFeedbackBoard" resultMap="adoptionFeedbackBoardMap">
+		<![CDATA[
+		SELECT 	afboard_id, afboard_title, user_id, afboard_cnt, afboard_date
+		FROM 	(
+				SELECT /*+ INDEX_DESC(adoptionFeedbackBoard pk_adoptionFeedbackBoard)*/		
+					rownum as rnum, afboard_id, afboard_title, user_id, afboard_cnt, afboard_date
+				FROM adoptionFeedbackBoard
+				WHERE	rownum <= #{pageNum} * #{amount}
+				)	adoptionFeedbackBoardList
+		WHERE	rnum > (#{pageNum} -1) * #{amount}
+		ORDER BY afboard_id DESC
+		]]>
+	</select>
+	
+	<!-- 입양후기게시판 게시글 갯수 카운트 -->
+	<select id="adoptionFeedbackBoardListCnt" parameterType="adoptionFeedbackBoard" resultType="int">
+		select count(*) from adoptionFeedbackBoard
+	</select>
+	
+	<!--  입양후기게시판 글 상세조회 -->
+	<select id="adoptionFeedbackBoardDetail" parameterType="adoptionFeedbackBoard" resultMap="adoptionFeedbackBoardMap">
+		WITH first_query AS (
+			select 	distinct a.afboard_id, a.afboard_title, a.afboard_content, a.afboard_cnt, a.afboard_date, a.user_id, r.user_id as reUserId, r.report_detail, r.report_id, r.report_sort, r.report_status
+			from 	adoptionFeedbackBoard a left join report r on a.afboard_id = r.afboard_id
+		    WHERE 	a.afboard_id = #{afboardId}
+		),
+		second_query AS (
+			select 	distinct a.afboard_id, a.afboard_title, a.afboard_content, a.afboard_cnt, a.afboard_date, a.user_id, r.user_id as reUserId, r.report_detail, r.report_id, r.report_sort, r.report_status
+			from 	adoptionFeedbackBoard a left join report r on a.afboard_id = r.afboard_id
+			where 	a.afboard_id = #{afboardId} and (r.user_id = #{userId} or r.user_id is null)
+		),
+		third_query AS (
+		    select 	distinct afboard_id, afboard_title, afboard_content, afboard_cnt, afboard_date, user_id, NULL as reuserId, NULL as report_detail, Null as report_sort, null as report_id, Null as report_status
+		    FROM 	adoptionFeedbackBoard
+		    WHERE 	afboard_id = #{afboardId}
+		)
+		SELECT *
+		FROM (
+		    SELECT * FROM first_query
+		    UNION ALL
+		    SELECT * FROM second_query
+		    UNION ALL
+		    SELECT * FROM third_query
+		) result
+		WHERE ROWNUM = 1
+	</select>
+
+	<!-- 게시판 등록 -->
+	<insert id="insertAdoptionFeedbackBoard" parameterType="adoptionFeedbackBoard">
+		<selectKey keyProperty="afboardId" order="BEFORE" resultType="int">
+			SELECT adoptionFeedbackBoard_seq.nextval from DUAL
+		</selectKey>
+		insert into adoptionFeedbackBoard (afboard_id, afboard_title, afboard_content, user_id)
+		VALUES (#{afboardId}, #{afboardTitle}, #{afboardContent}, #{userId})
+	</insert>
+	
+	<!-- 조회수 +1 -->
+	<update id="plusCnt" parameterType="adoptionFeedbackBoard">
+		UPDATE 	adoptionFeedbackBoard SET afboard_cnt = afboard_cnt +1 
+		WHERE 	afboard_id = #{afboardId}
+	</update>
+	
+	<!-- 게시글 수정 -->
+	<update id="updateAdoptionFeedbackBoard" parameterType="adoptionFeedbackBoard">
+		UPDATE adoptionFeedbackBoard
+		SET afboard_title = #{afboardTitle}, afboard_content = #{afboardContent}
+		WHERE	afboard_id = #{afboardId}
+	</update>
+	
+	<!-- 게시글 삭제 -->
+	<delete id="deleteAdoptionFeedbackBoard" parameterType="adoptionFeedbackBoard">
+		DELETE FROM adoptionFeedbackBoard 
+		WHERE	afboard_id = #{afboardId}
+	</delete>
+	
+	<!-- 내가 작성한 게시글 히스토리 -->
+	<select id="boardCreateHistory" parameterType="adoptionFeedbackBoard" resultMap="adoptionFeedbackBoardMap">
+		SELECT afboard_id, afboard_title, afboard_date, afboard_cnt, user_id
+		FROM adoptionFeedbackBoard
+		WHERE user_id = #{userId}
+		ORDER BY afboard_id DESC
+	</select>
+	
+</mapper>

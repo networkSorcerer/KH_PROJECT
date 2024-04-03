@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<typeAliases>
+		<typeAlias type="com.spring.report.vo.ReportVO" alias="report"/>
+		<typeAlias type="com.spring.donate.vo.DonateVO" alias="donate"/>
+		<typeAlias type="com.spring.user.vo.UserVO" alias="user" />
+		<typeAlias type="com.spring.volunteer.vo.VolunteerVO" alias="volunteer" />
+		<typeAlias type="com.spring.sanction.vo.SanctionVO" alias="sanction"/>
+		<typeAlias type="com.spring.counseling.vo.CounselingVO" alias="counseling"/>
+		<typeAlias type="com.spring.adoption.possible.vo.AdoptionPossibleVO" alias="adoptionPossible"/>
+		<typeAlias type="com.spring.map.vo.MapVO" alias="center"/>
+		<typeAlias type="com.spring.animal.vo.AnimalVO" alias="animal"/>
+		<typeAlias type="com.spring.adoption.vo.AdoptionVO" alias="adoption"/>		
+		<typeAlias type="com.spring.board.vo.NoticeBoardVO" alias="noticeBoard"/>
+		<typeAlias type="com.spring.board.vo.FreeBoardVO" alias="FreeBoard"/>
+		<typeAlias type="com.spring.board.vo.VolunteerFeedbackBoardVO" alias="volunteerFeedbackBoard"/>
+		<typeAlias type="com.spring.board.vo.AdoptionFeedbackBoardVO" alias="adoptionFeedbackBoard"/>
+		<typeAlias type="com.spring.comment.vo.FcommentVO" alias="fcomment"/>
+		<typeAlias type="com.spring.comment.vo.VfcommentVO" alias="vfcomment"/>
+		<typeAlias type="com.spring.comment.vo.AfcommentVO" alias="afcomment"/>
+		<typeAlias type="com.spring.application.vo.ApplicationVO" alias="application" />
+		<typeAlias type="com.spring.admin.login.vo.AdminLoginVO" alias="adminLogin" />
+	</typeAliases>
+</configuration>

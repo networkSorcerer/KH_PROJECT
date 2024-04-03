@@ -1,0 +1,11 @@
+@charset "EUC-KR";
+table #appliTable{
+	width : 100% !important;	
+	text-align : center !important;
+}
+
+.page-link{
+	--bs-pagination-active-bg: black !important;
+	background-color: val(--bs-pagination-active-bg) !important;
+	border-color : black !important;
+}

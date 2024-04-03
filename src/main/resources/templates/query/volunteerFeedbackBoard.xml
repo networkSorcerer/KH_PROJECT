@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.board.dao.VolunteerFeedbackBoardDAO">
+	<resultMap type="volunteerFeedbackBoard" id="volunteerFeedbackBoardMap">
+		<id column="vfboard_id" property="vfboardId"/>
+		<result column="vfboard_title" property="vfboardTitle"/>
+		<result column="vfboard_content" property="vfboardContent"/>
+		<result column="vfboard_cnt" property="vfboardCnt"/>
+		<result column="vfboard_date" property="vfboardDate"/>
+		<result column="user_id" property="userId"/>
+		
+		<result column="user_volcnt" property="userVolcnt"/>
+		
+		<result column="report_detail" property="reportDetail"/>
+		<result column="report_id" property="reportId"/>
+		<result column="report_sort" property="reportSort"/>
+		<result column="report_status" property="reportStatus"/>
+		
+	</resultMap>
+	
+	<!-- 봉사후기게시판 목록 -->
+	<select id="volunteerFeedbackBoardList" parameterType="volunteerFeedbackBoard" resultMap="volunteerFeedbackBoardMap">
+		<![CDATA[
+		SELECT 	vfboard_id, vfboard_title, user_id, vfboard_cnt, vfboard_date
+		FROM 	(
+				SELECT /*+ INDEX_DESC(volunteerFeedbackBoard pk_volunteerFeedbackBoard)*/
+					rownum as rnum, vfboard_id, vfboard_title, user_id, vfboard_cnt, vfboard_date
+				FROM volunteerFeedbackBoard
+				WHERE	rownum <= #{pageNum} * #{amount}
+				) volunteerFeedbackBoardList
+		WHERE	rnum > (#{pageNum} -1) * #{amount}
+		ORDER BY vfboard_id DESC
+		]]>
+	</select>
+	
+	<!-- 봉사후기게시판 게시글 갯수 카운트 -->
+	<select id="volunteerFeedbackBoardListCnt" parameterType="volunteerFeedbackBoard" resultType="int">
+		select count(*) from volunteerFeedbackBoard
+	</select>
+	
+	<!--  봉사후기게시판 글 상세조회 -->
+	<select id="volunteerFeedbackBoardDetail" parameterType="volunteerFeedbackBoard" resultMap="volunteerFeedbackBoardMap">
+		WITH first_query AS (
+			select 	distinct v.vfboard_id, v.vfboard_title, v.vfboard_content, v.vfboard_cnt, v.vfboard_date, v.user_id, r.user_id as reUserId, r.report_detail, r.report_id, r.report_sort, r.report_status
+			from 	volunteerFeedbackBoard v left join report r on v.vfboard_id = r.vfboard_id
+		    WHERE 	v.vfboard_id = #{vfboardId}
+		),
+		second_query AS (
+			select 	distinct v.vfboard_id, v.vfboard_title, v.vfboard_content, v.vfboard_cnt, v.vfboard_date, v.user_id, r.user_id as reUserId, r.report_detail, r.report_id, r.report_sort, r.report_status
+			from 	volunteerFeedbackBoard v left join report r on v.vfboard_id = r.vfboard_id
+			where 	v.vfboard_id = #{vfboardId} and (r.user_id = #{userId} or r.user_id is null)
+		),
+		third_query AS (
+		    select 	distinct vfboard_id, vfboard_title, vfboard_content, vfboard_cnt, vfboard_date, user_id, NULL as reuserId, NULL as report_detail, Null as report_sort, Null as report_id, Null as report_status
+		    FROM 	volunteerFeedbackBoard
+		    WHERE 	vfboard_id = #{vfboardId}
+		)
+		SELECT *
+		FROM (
+		    SELECT * FROM first_query
+		    UNION ALL
+		    SELECT * FROM second_query
+		    UNION ALL
+		    SELECT * FROM third_query
+		) result
+		WHERE ROWNUM = 1
+	</select>
+
+	<!-- 게시판 등록 -->
+	<insert id="insertVolunteerFeedbackBoard" parameterType="volunteerFeedbackBoard">
+		<selectKey keyProperty="vfboardId" order="BEFORE" resultType="int">
+			SELECT volunteerFeedbackBoard_seq.nextval from DUAL
+		</selectKey>
+		insert into volunteerFeedbackBoard (vfboard_id, vfboard_title, vfboard_content, user_id)
+		VALUES (#{vfboardId}, #{vfboardTitle}, #{vfboardContent}, #{userId})
+	</insert>
+	
+	<!-- 조회수 +1 -->
+	<update id="plusCnt" parameterType="volunteerFeedbackBoard">
+		UPDATE 	volunteerFeedbackBoard SET vfboard_cnt = vfboard_cnt +1 
+		WHERE 	vfboard_id = #{vfboardId}
+	</update>
+	
+	<!-- 게시글 수정 -->
+	<update id="updateVolunteerFeedbackBoard" parameterType="volunteerFeedbackBoard">
+		UPDATE volunteerFeedbackBoard
+		SET vfboard_title = #{vfboardTitle}, vfboard_content = #{vfboardContent}
+		WHERE	vfboard_id = #{vfboardId}
+	</update>
+	
+	<!-- 게시글 삭제 -->
+	<delete id="deleteVolunteerFeedbackBoard" parameterType="volunteerFeedbackBoard">
+		DELETE FROM volunteerFeedbackBoard 
+		WHERE	vfboard_id = #{vfboardId}
+	</delete>
+	
+	<!-- 내가 작성한 게시글 히스토리 -->
+	<select id="boardCreateHistory" parameterType="volunteerFeedbackBoard" resultMap="volunteerFeedbackBoardMap">
+		SELECT vfboard_id, vfboard_title, vfboard_date, vfboard_cnt, user_id
+		FROM volunteerFeedbackBoard
+		WHERE user_id = #{userId}
+		ORDER BY vfboard_id DESC
+	</select>
+</mapper>

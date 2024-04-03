@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.volunteer.dao.VolunteerDAO">
+	<resultMap type="volunteer" id="volunteerMap">
+		<id column="volunteer_id" property="volunteerId"/>
+		<result column="volunteer_detail" property="volunteerDetail"/>
+		<result column="volunteer_date" property="volunteerDate"/>
+		<result column="volunteer_title" property="volunteerTitle"/>
+		<result column="volunteer_time" property="volunteerTime"/>
+		<result column="volunteer_due" property="volunteerDue"/>
+		<result column="volunteer_limit" property="volunteerLimit"/>
+		<result column="volunteer_cost" property="volunteerCost"/>
+		<result column="volunteer_location" property="volunteerLocation"/>
+		<result column="admin_id" property="adminId" />
+		<result column="volunteer_file" property="volunteerFile" />
+	</resultMap>
+	
+	<!-- 봉사 공고 리스트 달력에 표현하기 -->
+	<select id="volunteerList" parameterType="volunteer" resultMap="volunteerMap"> 
+		SELECT volunteer_id, volunteer_Time, volunteer_title
+		FROM volunteer 
+		ORDER BY volunteer_id DESC 
+	</select>
+	
+	<!-- 봉사 공고 상세정보 -->
+	<select id="volunteerDetail" parameterType="volunteer" resultMap="volunteerMap">
+		SELECT volunteer_id, volunteer_detail, volunteer_date, volunteer_title, 
+			   volunteer_time, 
+			   volunteer_due, 
+			   volunteer_limit, volunteer_cost, volunteer_location, volunteer_file
+	    FROM volunteer
+	    WHERE volunteer_id = #{volunteerId}
+	</select>
+	
+	<!-- 관리자 페이지에서 봉사 공고 입력하기 -->
+	<insert id="volunteerInsert" parameterType="volunteer">
+		INSERT INTO volunteer
+		VALUES(volunteer_seq.nextval, #{volunteerDetail}, sysdate, #{volunteerTitle}, #{volunteerTime}, 
+			   #{volunteerDue}, #{volunteerLimit}, 
+			   <choose>
+	               <when test="volunteerCost != null and volunteerCost != ''">
+	                   #{volunteerCost}
+	               </when>
+	               <otherwise>
+	                   default
+	               </otherwise>
+	           </choose>
+			   , #{volunteerLocation}, 'admin', #{volunteerFile})
+	</insert>
+	
+	<!-- 관리자 페이지에서 봉사 공고 수정하기 -->
+	<update id="volunteerUpdate" parameterType="volunteer">
+		    UPDATE volunteer
+		    SET volunteer_title = #{volunteerTitle}, volunteer_time = #{volunteerTime}, volunteer_due = #{volunteerDue},
+		        volunteer_limit = #{volunteerLimit},
+		        <if test="volunteerCost != ''">
+		        	volunteer_cost = #{volunteerCost},
+		        </if>
+		        <if test="volunteerCost == ''">
+		        	volunteer_cost = default,
+		        </if>
+		        volunteer_location = #{volunteerLocation}, volunteer_detail = #{volunteerDetail}
+		        <if test="volunteerFile != ''">
+		    	, volunteer_file = #{volunteerFile}    
+		        </if>
+		    WHERE volunteer_id = #{volunteerId}
+	</update>
+	
+	<delete id="volunteerDelete" parameterType="volunteer">
+		DELETE FROM volunteer
+		WHERE volunteer_id = #{volunteerId}
+	</delete>
+	
+	<!-- 메인페이지에 표시할 최근 두 개의 봉사공고 -->
+	<select id="mainVol" parameterType="volunteer" resultMap="volunteerMap">
+		select volunteer_id, volunteer_title, volunteer_time, volunteer_limit, volunteer_cost, volunteer_location, volunteer_file
+		from (
+			select volunteer_id, volunteer_title, volunteer_time, volunteer_limit, volunteer_cost, volunteer_location, volunteer_file
+			from volunteer
+			order by volunteer_id desc
+		)
+		where rownum &lt;=2
+	</select>
+</mapper>
+

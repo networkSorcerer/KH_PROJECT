@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.counseling.dao.CounselingDAO">
+    <resultMap type="counseling" id="counselingMap">
+        <id column="counseling_id" property="counselingId"/>
+        <result column="counseling_schedule" property="counselingSchedule"/>
+        <result column="user_id" property="userId"/>
+        <result column="adoption_id" property="adoptionId"/>
+        <result column="animal_id" property="animalId"/>
+        <result column="counseling_date" property="counselingDate"/>
+        <result column="counseling_judgment" property="counselingJudgment"/>
+        <result column="counseling_detail" property="counselingDetail"/>
+        <result column="counseling_age" property="counselingAge"/>
+        <result column="counseling_address" property="counselingAddress"/>
+        <result column="counseling_job" property="counselingJob"/>
+        <result column="counseling_adopt" property="counselingAdopt"/>
+        <result column="user_name" property="userName" />
+        <result column="user_phone" property="userPhone" />
+        <association property="user">
+            <result column="user_name" property="userName" />
+            <result column="user_phone" property="userPhone" />
+        </association>
+    </resultMap>
+
+    <!-- 상담 신청 목록 -->
+    <select id="counselingList" parameterType="counseling" resultMap="counselingMap">
+        SELECT counseling_id, counseling_schedule, user_id, adoption_id, animal_id, counseling_date,
+               counseling_judgment, counseling_detail, counseling_age, counseling_address, counseling_job, counseling_adopt
+        FROM counseling
+        WHERE user_id = #{userId}
+        ORDER BY counseling_id DESC
+    </select>
+
+    <!-- 상담 신청 목록(관리자) -->
+    <select id="adminCounselingList" parameterType="counseling" resultMap="counselingMap">
+        SELECT counseling_id, counseling_schedule, user_id, adoption_id, animal_id, counseling_date,
+               counseling_judgment, counseling_detail, counseling_age, counseling_address, counseling_job, counseling_adopt
+        FROM counseling
+        ORDER BY counseling_id DESC
+    </select>
+
+    <!-- 상담 신청 상세정보 -->
+    <select id="counselingDetail" parameterType="int" resultMap="counselingMap">
+        SELECT counseling_id, counseling_schedule, user_id, adoption_id, animal_id, counseling_date,
+               counseling_judgment, counseling_detail, counseling_age, counseling_address, counseling_job, counseling_adopt, user_name, user_phone
+        FROM counseling
+        WHERE counseling_id = #{counselingId}
+    </select>
+
+    <!-- writeForm 에 정보 출력 -->
+    <select id="writeForm" parameterType="counseling" resultMap="counselingMap">
+        SELECT user_name, user_phone
+        FROM users
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 상담 신청 입력 -->
+    <insert id="counselingInsert" parameterType="counseling">
+        insert into counseling(counseling_id, counseling_schedule, user_id, adoption_id, animal_id, counseling_date,
+                               counseling_judgment, counseling_detail, counseling_age, counseling_address, counseling_job, counseling_adopt, user_name, user_phone)
+        VALUES (
+                   counseling_seq.nextval,
+                   #{counselingSchedule},
+                   #{userId},
+                   #{adoptionId},
+                   #{animalId},
+                   sysdate,
+                   default,
+                   '상담 전',
+                   #{counselingAge},
+                   #{counselingAddress},
+                   #{counselingJob},
+                   default,
+                   #{userName},
+                   #{userPhone}
+               )
+    </insert>
+
+    <!-- 상담 신청 수정 -->
+    <update id="counselingUpdate" parameterType="counseling">
+        UPDATE counseling
+        SET counseling_schedule = #{counselingSchedule}, counseling_age = #{counselingAge}, counseling_address = #{counselingAddress},
+            counseling_job = #{counselingJob}, user_phone = #{userPhone}
+        WHERE counseling_id = #{counselingId}
+    </update>
+
+    <!-- admin 단 상담 신청 수정 -->
+    <update id="adminCounselingUpdate" parameterType="counseling">
+        UPDATE counseling
+        SET counseling_judgment = #{counselingJudgment}, counseling_detail = #{counselingDetail}
+        WHERE counseling_id = #{counselingId}
+    </update>
+
+    <update id="userCounselingUpdate" parameterType="counseling">
+        UPDATE users
+        SET
+        <if test="counselingJudgment == '적격'">
+            user_adoptchk = 1
+        </if>
+        <if test="counselingJudgment == '비적격'">
+            user_adoptchk = 0
+        </if>
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 상담 신청 삭제 -->
+    <delete id="counselingDelete" parameterType="counseling">
+        DELETE FROM counseling
+        WHERE counseling_id = #{counselingId}
+    </delete>
+</mapper>

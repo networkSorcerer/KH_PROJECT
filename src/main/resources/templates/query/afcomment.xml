@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.comment.dao.AfcommentDAO">
+	<resultMap type="afcomment" id="afcommentMap">
+		<id column="afcomment_id" property="afcommentId"/>
+		<result column="afcomment_content" property="afcommentContent"/>
+		<result column="afcomment_date" property="afcommentDate"/>
+		<result column="afboard_id" property="afboardId"/>
+		<result column="user_id" property="userId"/>
+	</resultMap>
+
+	<!-- 자유게시판 댓글 조회 -->
+	<select id="afcommentList" parameterType="afcomment" resultMap="afcommentMap">
+		SELECT	afcomment_id, afcomment_content, afcomment_date, afboard_id, user_id
+		FROM 	AFcomment
+		WHERE 	afboard_id = #{afboardId}
+		ORDER BY afcomment_id DESC
+	</select>
+	
+	<!-- 자유게시판 댓글 작성 -->
+	<insert id="afcommentInsert" parameterType="afcomment">
+		<selectKey keyProperty="afcommentId" resultType="int" order="BEFORE">
+			select AFcomment_seq.nextval from dual
+		</selectKey>
+		INSERT INTO AFcomment (afcomment_id, afcomment_content, afcomment_date, afboard_id, user_id)
+		VALUES (#{afcommentId}, #{afcommentContent}, sysdate, #{afboardId}, #{userId})
+	</insert>
+	
+	<!-- 자유게시판 댓글 수정 -->
+	<update id="afcommentUpdate" parameterType="afcomment">
+		UPDATE AFcomment
+		SET afcomment_content = #{afcommentContent}, afcomment_date = sysdate
+		WHERE afcomment_id = #{afcommentId}  
+	</update>
+	
+	<!-- 자유게시판 댓글 삭제 -->
+	<delete id="afcommentDelete" parameterType="afcomment">
+		DELETE
+		FROM AFcomment
+		WHERE afcomment_id = #{afcommentId}
+	</delete>
+	
+	<select id="afcommentDetail" parameterType="afcomment" resultMap="afcommentMap">
+		WITH first_query AS (
+		    SELECT f.afcomment_id, f.user_id, r.user_id AS reuserId, r.report_detail, r.report_sort, r.report_id
+		    FROM afcomment f LEFT JOIN report r ON f.afcomment_id = r.afcomment_id
+		    WHERE f.afcomment_id = #{afcommentId}
+		),
+		second_query AS (
+		    SELECT f.afcomment_id, f.user_id, r.user_id AS reuserId, r.report_detail, r.report_sort, r.report_id
+		    FROM afcomment f LEFT JOIN report r ON f.afboard_id = r.afboard_id
+		    WHERE f.afcomment_id = #{afcommentId} AND (r.user_id = #{userId} OR r.user_id IS NULL)
+		),
+		third_query AS (
+		    SELECT afcomment_id, user_id, NULL as reuserId, NULL as report_detail, Null as report_sort, Null as report_id
+		    FROM afcomment
+		    WHERE afcomment_id = #{afcommentId}
+		)
+		SELECT *
+		FROM (
+		    SELECT * FROM first_query
+		    UNION ALL
+		    SELECT * FROM second_query
+		    UNION ALL
+		    SELECT * FROM third_query
+		) result
+		WHERE ROWNUM = 1
+	</select>
+
+</mapper>

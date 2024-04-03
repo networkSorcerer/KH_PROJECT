@@ -1,0 +1,112 @@
+h1{
+    color: rgb(0, 0, 0);
+}
+
+h2{
+    color: rgb(70, 70, 70);
+}
+
+body{
+    height: 100%;
+    background: url(/resources/images/donate/saveTheAnimal.jpg) no-repeat;
+    background-size: cover;
+}
+
+
+.donatePay_data{
+    background-color: white;
+    border-top: solid 10px;
+    border-color: rgb(0, 0, 0);
+    border-radius: 10px;
+    padding: 40px;
+    margin: 100px;
+    width: 550px;
+    height: 1000px;
+    float: right;
+}
+
+.warning {
+    background-color: whitesmoke;
+    padding: 5px;
+    color: grey;
+}
+
+.priceSelect{
+    padding-bottom: 20px;
+    border-spacing: 10px
+}
+
+
+
+.priceSelect th {
+    font-size: 25px;
+    padding: 20px;
+    border-radius: 5px;
+    padding-right: 50px;
+    padding-left: 50px;
+    background-color: rgb(0, 0, 0);
+    color: white;
+}
+
+.priceSelect td{
+    padding: 5px;
+}
+
+.priceSelect label {
+    border-radius: 5px;
+    border: solid 1px gray ;
+    font-size: 20px;    
+    padding: 5px;
+    padding-right: 28px;
+    padding-left: 28px;
+}
+
+.input_Select{
+    text-align: right;
+    width: 250px;
+    font-size: 20px;
+    border: 0;
+}
+
+.priceSelect input[type="radio"]{
+    display: none;
+}
+
+.priceData{
+    padding-bottom: 20px;
+    border-spacing: 10px
+}
+
+.priceData th {
+    font-size: 22px;
+    color: rgb(70, 70, 70);
+}
+
+.priceData input[type="text"]{
+    font-size: 22px;
+    padding: 10px;
+}
+
+.Privacy_Check{
+    padding-top: 10px;
+}
+
+.selected {
+    background-color: rgb(192, 192, 192); /* 선택된 항목의 배경색 */
+}
+
+.donatePayBtn{
+    background-color: gray;
+    width: 300px;
+    height: 60px;
+    align-items : center;   
+    margin-left: 120px;
+    margin-top: 50px;
+    color: white;
+    font-size: 30px;
+    border-radius: 5px;
+    border: 0;
+}
+
+
+

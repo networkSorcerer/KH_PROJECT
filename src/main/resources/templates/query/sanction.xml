@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.sanction.dao.SanctionDao">
+	<resultMap type="sanction" id="sanctionMap">
+		<id column="sanction_id" property="sanctionId"/>
+		<result column="sanction_status" property="sanctionStatus"/>
+		<result column="sanction_result" property="sanctionStatus"/>
+		<result column="sanction_date" property="sanctionStatus"/>
+		<!-- 
+<<<<<<< HEAD
+
+=======
+>>>>>>> ae9a0808accab8b7ccf8df506173f2039dd05859
+ -->
+		<result column="report_id" property="reportId"/>	
+	</resultMap>
+	
+	<insert id="sanctionInsert" parameterType="sanction">
+		insert into sanction(sanction_id, sanction_status, sanction_result, sanction_date, report_id)
+		values(sanction_seq.nextval, 1, 
+		    (select (user_repcnt + 1) from users where user_id = #{boardUser})
+		    , sysdate, #{reportId})		
+	</insert>
+	
+</mapper>
+

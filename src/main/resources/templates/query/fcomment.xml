@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.comment.dao.FcommentDAO">
+	<resultMap type="fcomment" id="fcommentMap">
+		<id column="fcomment_id" property="fcommentId"/>
+		<result column="fcomment_content" property="fcommentContent"/>
+		<result column="fcomment_date" property="fcommentDate"/>
+		<result column="fboard_id" property="fboardId"/>
+		<result column="user_id" property="userId"/>
+		
+		<result column="report_detail" property="reportDetail" />
+		<result column="report_detail" property="reportDetail" />
+		<result column="report_id" property="reportId" />
+		<result column="report_sort" property="reportSort" />
+	</resultMap>
+
+	<!-- 자유게시판 댓글 조회 -->
+	<select id="fcommentList" parameterType="fcomment" resultMap="fcommentMap">
+		SELECT	fcomment_id, fcomment_content, fcomment_date, fboard_id, user_id
+		FROM 	Fcomment
+		WHERE 	fboard_id = #{fboardId}
+		ORDER BY fcomment_id DESC
+	</select>
+	
+	<select id="fcommentDetail" parameterType="fcomment" resultMap="fcommentMap">
+		WITH first_query AS (
+		    SELECT f.fcomment_id, f.user_id, r.user_id AS reuserId, r.report_detail, r.report_sort, r.report_id
+		    FROM fcomment f LEFT JOIN report r ON f.fcomment_id = r.fcomment_id
+		    WHERE f.fcomment_id = #{fcommentId}
+		),
+		second_query AS (
+		    SELECT f.fcomment_id, f.user_id, r.user_id AS reuserId, r.report_detail, r.report_sort, r.report_id
+		    FROM fcomment f LEFT JOIN report r ON f.fboard_id = r.fboard_id
+		    WHERE f.fcomment_id = #{fcommentId} AND (r.user_id = #{userId} OR r.user_id IS NULL)
+		),
+		third_query AS (
+		    SELECT fcomment_id, user_id, NULL as reuserId, NULL as report_detail, Null as report_sort, Null as report_id
+		    FROM fcomment
+		    WHERE fcomment_id = #{fcommentId}
+		)
+		SELECT *
+		FROM (
+		    SELECT * FROM first_query
+		    UNION ALL
+		    SELECT * FROM second_query
+		    UNION ALL
+		    SELECT * FROM third_query
+		) result
+		WHERE ROWNUM = 1
+	</select>
+	
+	<!-- 자유게시판 댓글 작성 -->
+	<insert id="fcommentInsert" parameterType="fcomment">
+		<selectKey keyProperty="fcommentId" resultType="int" order="BEFORE">
+			select Fcomment_seq.nextval from dual
+		</selectKey>
+		INSERT INTO Fcomment (fcomment_id, fcomment_content, fcomment_date, fboard_id, user_id)
+		VALUES (#{fcommentId}, #{fcommentContent}, sysdate, #{fboardId}, #{userId})
+	</insert>
+	
+	<!-- 자유게시판 댓글 수정 -->
+	<update id="fcommentUpdate" parameterType="fcomment">
+		UPDATE Fcomment
+		SET fcomment_content = #{fcommentContent}, fcomment_date = sysdate
+		WHERE fcomment_id = #{fcommentId}  
+	</update>
+	
+	<!-- 자유게시판 댓글 삭제 -->
+	<delete id="fcommentDelete" parameterType="fcomment">
+		DELETE
+		FROM fcomment
+		WHERE fcomment_id = #{fcommentId}
+	</delete>
+</mapper>

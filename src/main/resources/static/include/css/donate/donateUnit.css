@@ -1,0 +1,37 @@
+b{
+	color: white;
+}
+
+.donate_user{
+    background-color: white;
+    border-top: solid 10px;
+    border-color: black;
+    border-radius: 10px;
+    padding: 40px;
+    margin: 100px;
+    margin-left: 650px;
+    width: 550px;
+    height: 650px;
+    float:none;
+}
+
+
+.donate_data_name{
+	margin-top: 100px;
+}
+
+.donate_data_box{
+	background-color: gray;
+	color: white;
+	font-size: 35px;
+	width: 150px;
+	border-radius: 10px;
+}
+
+.donate_data_name button{
+	padding: auto;
+	font-size: 12px;
+	background-color: rgb(200, 200, 200);
+	border-radius: 10px
+	
+}
